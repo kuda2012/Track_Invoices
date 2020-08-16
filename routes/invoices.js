@@ -5,65 +5,69 @@ const db = require("../db");
 
 router.get("/", async (req, res, next) => {
   try {
-    const results = await db.query(`SELECT * FROM companies`);
-    return res.json({ companies: results.rows });
+    const results = await db.query(
+      `SELECT id, comp_code, amt, paid, to_char(add_date, 'dd-MM-yy') as add_date, to_char(paid_date, 'dd-MM-yy') as paid_date FROM invoices`
+    );
+    return res.json({ invoices: results.rows });
   } catch (e) {
     next(e);
   }
 });
 router.post("/", async (req, res, next) => {
   try {
-    const { code, name, description } = req.body;
+    const { comp_code, amt } = req.body;
     const results = await db.query(
-      `INSERT INTO companies (code, name, description) VALUES ($1, $2, $3) RETURNING code, name, description`,
-      [code, name, description]
+      `INSERT INTO invoices (comp_code, amt) VALUES ($1, $2) RETURNING id, comp_code, amt, paid, to_char(add_date, 'dd-MM-yy') as add_date, to_char(paid_date, 'dd-MM-yy') as paid_date`,
+      [comp_code, amt]
     );
-    return res.json({ company: results.rows[0] });
+    return res.json({ invoice: results.rows[0] });
   } catch (e) {
     next(e);
   }
 });
-router.get("/:code", async (req, res, next) => {
+router.get("/:id", async (req, res, next) => {
   try {
-    const { code } = req.params;
-    const results = await db.query(`SELECT * FROM companies WHERE code = $1`, [
-      code,
+    const { id } = req.params;
+    const results = await db.query(`SELECT * FROM invoices WHERE id = $1`, [
+      id,
     ]);
     if (!results.rows[0]) {
-      throw new ExpressError("Could not find company with that code", 404);
+      throw new ExpressError("Could not find an invoice with that id", 404);
     }
-    return res.json({ company: results.rows[0] });
+    return res.json({ invoice: results.rows[0] });
   } catch (e) {
     next(e);
   }
 });
-router.put("/:code", async (req, res, next) => {
+router.put("/:id", async (req, res, next) => {
   try {
-    const { name, description } = req.body;
-    const { code } = req.params;
+    const { id } = req.params;
+    const { amt } = req.body;
     const results = await db.query(
-      `UPDATE companies set name = $1, description = $2 WHERE code = $3 RETURNING code, name, description`,
-      [name, description, code]
+      `UPDATE invoices set amt = $1 WHERE id = $2 RETURNING id, comp_code, amt, paid, to_char(add_date, 'dd-MM-yy') as add_date, to_char(paid_date, 'dd-MM-yy') as paid_date`,
+      [amt, id]
     );
     if (!results.rows[0]) {
-      throw new ExpressError("Could not find company with that code", 404);
+      throw new ExpressError("Could not find an invoice with that id", 404);
     }
-    return res.json({ company: results.rows[0] });
+    return res.json({ invoice: results.rows[0] });
   } catch (e) {
     next(e);
   }
 });
-router.delete("/:code", async (req, res, next) => {
+router.delete("/:id", async (req, res, next) => {
   try {
-    const { code } = req.params;
+    const { id } = req.params;
     const results = await db.query(
-      `DELETE FROM companies WHERE code = $1 RETURNING code`,
-      [code]
+      `DELETE FROM invoices WHERE id = $1 RETURNING id, comp_code`,
+      [id]
     );
     if (!results.rows[0]) {
-      throw new ExpressError("Could not find company with that code", 404);
+      throw new ExpressError("Could not find an invoice with that id", 404);
     }
-    return res.json({ status: `${results.rows[0].code} deleted` });
+    return res.json({
+      status: `Invoice for company ${results.rows[0].comp_code} with id:${results.rows[0].id} deleted`,
+    });
   } catch (e) {
     next(e);
   }
