@@ -33,7 +33,7 @@ router.get("/:code", async (req, res, next) => {
       `SELECT id, comp_code, amt, paid, to_char(add_date, 'dd-MM-yy') as add_date, to_char(paid_date, 'dd-MM-yy') as paid_date FROM invoices WHERE comp_code='${results.rows[0].code}'`
     );
     if (invoices != {}) {
-      results.rows[0]["invoices"] = invoices.rows;
+      results.rows[0]["invoices"] = invoices.rows.map((inv) => inv.id);
     }
 
     if (!results.rows[0]) {
