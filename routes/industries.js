@@ -31,7 +31,7 @@ router.post("/", async (req, res, next) => {
   try {
     const { code, industry } = req.body;
     if (!industry || !code)
-      throw new ExpressError("Check the format of your new industry", 400);
+      throw new ExpressError("Check the format of your entered industry", 400);
     const checkIndustry = await db.query(
       `SELECT industry from industries where code = $1`,
       [code]

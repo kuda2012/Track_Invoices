@@ -45,6 +45,8 @@ router.put("/:id", async (req, res, next) => {
   try {
     const { id } = req.params;
     const { amt } = req.body;
+    if (!amt)
+      throw new ExpressError("Check the format of entered invoice", 400);
     const results = await db.query(
       `UPDATE invoices set amt = $1 WHERE id = $2 RETURNING id, comp_code, amt, paid, to_char(add_date, 'dd-MM-yy') as add_date, to_char(paid_date, 'dd-MM-yy') as paid_date`,
       [amt, id]
