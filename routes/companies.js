@@ -39,6 +39,9 @@ router.get("/:code", async (req, res, next) => {
       `SELECT * FROM companies WHERE code = $1`,
       [code]
     );
+    if (!companyResults.rows[0]) {
+      throw new ExpressError("Could not find company with that code", 404);
+    }
     const invoices = await db.query(
       `SELECT id, comp_code, amt, paid, to_char(add_date, 'dd-MM-yy') as add_date, to_char(paid_date, 'dd-MM-yy') as paid_date FROM invoices WHERE comp_code='${companyResults.rows[0].code}'`
     );
@@ -50,7 +53,6 @@ router.get("/:code", async (req, res, next) => {
       [code]
     );
     if (invoices.rows.length != 0) {
-      console.log(invoices, companiesIndustries);
       companyResults.rows[0].invoices = invoices.rows.map((inv) => inv.id);
     }
     if (companiesIndustries.rows.length != 0) {
@@ -58,9 +60,7 @@ router.get("/:code", async (req, res, next) => {
         (industry) => industry.industry
       );
     }
-    if (!companyResults.rows[0]) {
-      throw new ExpressError("Could not find company with that code", 404);
-    }
+
     return res.json({ company: companyResults.rows[0] });
   } catch (e) {
     next(e);
